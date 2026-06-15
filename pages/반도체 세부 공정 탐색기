@@ -1,0 +1,48 @@
+import streamlit as st
+import pandas as pd
+import os
+
+st.set_page_config(page_title="공정 탐색기", page_icon="🔍", layout="wide")
+
+@st.cache_data
+def load_data():
+    file_name = "한국나노기술원_공정 정보_20260226.csv"
+    if not os.path.exists(file_name):
+        return None
+    try:
+        df = pd.read_csv(file_name, encoding='utf-8-sig')
+    except UnicodeDecodeError:
+        df = pd.read_csv(file_name, encoding='cp949')
+    df.columns = ['기관명', '공정코드', '공정명', '공정그룹코드', '공정그룹']
+    return df
+
+df = load_data()
+
+st.title("🔍 반도체 세부 공정 탐색기")
+st.write("이 페이지에서는 한국나노기술원에서 실제로 수행하는 공정들을 그룹별로 조회하고 분석할 수 있습니다.")
+
+if df is not None:
+    st.sidebar.header("공정 필터")
+    
+    all_groups = sorted(df['공정그룹'].dropna().unique())
+    selected_group = st.sidebar.selectbox("공정그룹 선택", ["전체 보기"] + list(all_groups))
+    
+    search_keyword = st.sidebar.text_input("공정명 검색 (영문/한글)", "")
+    
+    # 데이터 필터링
+    filtered_df = df.copy()
+    if selected_group != "전체 보기":
+        filtered_df = filtered_df[filtered_df['공정그룹'] == selected_group]
+        
+    if search_keyword:
+        filtered_df = filtered_df[filtered_df['공정명'].str.contains(search_keyword, case=False, na=False)]
+        
+    st.write(f"### 📋 조회 결과 (총 {len(filtered_df)}건)")
+    st.dataframe(filtered_df, use_container_width=True)
+    
+    st.markdown("---")
+    st.markdown("### 💡 생각해보기 (스스로 탐구해봅시다)")
+    st.write("1. **CVD, SPUTTER, EVAPORATOR** 공정그룹의 공정명들을 비교해 보세요. 이 공정들은 모두 반도체 표면에 얇은 막을 입히는 '박막(Thin Film) 증착 공정'에 속합니다. 각각 어떤 기술적 차이점이 있을까요?")
+    st.write("2. **ETCH, ICP, RIE** 공정그룹을 찾아보세요. 식각(Etch) 공정에서 건식 식각(Dry Etch)과 습식 식각(Wet Etch)의 특징은 데이터 속 공정명에서 어떻게 다르게 표현되고 있나요?")
+else:
+    st.error("데이터를 찾을 수 없습니다. 메인 페이지의 오류 메시지를 확인하세요.")
