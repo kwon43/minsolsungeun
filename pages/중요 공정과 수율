@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 
-st.set_page_config(page_title="중요 공정과 수율", page_icon="📈", layout="wide")
+# ✅ set_page_config 없음 (app.py에만 있어야 함)
 
 @st.cache_data
 def load_data():
@@ -20,80 +20,94 @@ df = load_data()
 
 st.title("📈 중요한 반도체 공정과 수율(Yield)")
 
-# 데이터의 특성과 수율 관계를 고등학생 눈높이에 맞춰 안내하는 경고창
 st.warning("""
-🚨 **데이터 특징 안내**
-제공해주신 '한국나노기술원 공정 정보' 데이터는 공정 종류를 정의한 마스터 코드 데이터입니다. 구체적인 생산 불량률이나 수율 수치(%) 데이터는 포함되어 있지 않습니다.
-하지만 반도체 공정에서 실제 수율을 높이고 품질을 관리하기 위해 없어서는 안 될 **'검사(INSPECTION)'**, **'테스트(PROBE TEST/RELIABILITY TEST)'**, **'고장 분석(FAILURE)'**, **'계측(MEASUREMENT)'** 공정이 매우 구체적으로 등록되어 있습니다.
-따라서 본 페이지에서는 이 핵심 '수율 방어 공정'들을 분석하고 학습합니다.
+🚨 **데이터 특징 안내**  
+제공해주신 '한국나노기술원 공정 정보' 데이터는 공정 종류를 정의한 마스터 코드 데이터입니다.  
+구체적인 생산 불량률이나 수율 수치(%) 데이터는 포함되어 있지 않습니다.  
+하지만 수율을 높이고 품질을 관리하기 위한 **'검사(INSPECTION)'**, **'테스트(PROBE TEST/RELIABILITY TEST)'**,  
+**'고장 분석(FAILURE)'**, **'계측(MEASUREMENT)'** 공정이 구체적으로 등록되어 있습니다.  
+본 페이지에서는 이 핵심 '수율 방어 공정'들을 분석하고 학습합니다.
 """)
 
 if df is not None:
-    # 수율과 직접 관련된 데이터셋 내의 공정그룹 정의
     yield_related_groups = [
-        'INSPECTION', 
-        'PROBE TEST', 
-        'RELIABILITY TEST', 
-        'FAILURE', 
+        'INSPECTION',
+        'PROBE TEST',
+        'RELIABILITY TEST',
+        'FAILURE',
         'MEASUREMENT&ANALYSIS',
         'SURFACE'
     ]
-    
+
     st.markdown("### 🛠️ 우리 데이터 속 '수율 관리 및 검사' 관련 공정 현황")
-    
-    # 해당되는 수율 관리 데이터 필터링
+
     yield_df = df[df['공정그룹'].isin(yield_related_groups)]
-    
+
     col1, col2 = st.columns([1, 2])
-    
+
     with col1:
         st.write("#### 📊 수율 관련 공정그룹 개수 비교")
         yield_counts = yield_df['공정그룹'].value_counts()
         st.write(yield_counts)
         st.bar_chart(yield_counts)
-        
+
     with col2:
         st.write("#### 🔍 세부 수율 관리 공정 목록")
-        selected_yield_group = st.selectbox("탐구할 수율 관리 영역을 선택해 주세요", yield_related_groups)
+        selected_yield_group = st.selectbox(
+            "탐구할 수율 관리 영역을 선택해 주세요",
+            yield_related_groups
+        )
         specific_yield_df = yield_df[yield_df['공정그룹'] == selected_yield_group]
-        st.dataframe(specific_yield_df[['공정코드', '공정명', '공정그룹']], use_container_width=True)
+        st.dataframe(
+            specific_yield_df[['공정코드', '공정명', '공정그룹']],
+            use_container_width=True
+        )
 
     st.markdown("---")
     st.markdown("### 💡 공정이 수율에 주는 영향과 역할 탐구")
-    
-    # 탭 기능을 이용해 고등학생이 깊이 탐구할 수 있는 정보 제공
-    tab1, tab2, tab3 = st.tabs(["🧐 계측 및 검사 (INSPECTION)", "⚡ 전기 및 신뢰성 테스트 (PROBE/RELIABILITY)", "🔬 불량 추적 및 분석 (SURFACE/FAILURE)"])
-    
+
+    tab1, tab2, tab3 = st.tabs([
+        "🧐 계측 및 검사 (INSPECTION)",
+        "⚡ 전기 및 신뢰성 테스트 (PROBE/RELIABILITY)",
+        "🔬 불량 추적 및 분석 (SURFACE/FAILURE)"
+    ])
+
     with tab1:
         st.markdown("""
         **1. INSPECTION (검사/계측 공정)의 역할**
-        - **데이터 속 실제 공정 예시**: `CD Measure` (선폭 측정), `Thickness Measure` (두께 측정), `Metal Thickness Inspection` (금속 두께 검사) 등
-        - **수율에 미치는 영향**: 
-          반도체의 회로 선폭(CD)이나 박막 두께는 나노미터(nm) 단위로 설계됩니다. 이 두께나 선폭이 조금이라도 어긋나면 저항이 바뀌어 오작동하거나 회로가 끊어집니다. 따라서 다음 공정으로 가기 전 수시로 물리적 크기를 **계측(Measurement)**하여 규격 밖의 결함을 차단함으로써 최종 수율을 보호합니다.
+        - **데이터 속 실제 공정 예시**: `CD Measure` (선폭 측정), `Thickness Measure` (두께 측정), `Metal Thickness Inspection` (금속 두께 검사)
+        - **수율에 미치는 영향**:  
+          반도체의 회로 선폭(CD)이나 박막 두께는 나노미터(nm) 단위로 설계됩니다.  
+          이 두께나 선폭이 조금이라도 어긋나면 저항이 바뀌어 오작동하거나 회로가 끊어집니다.  
+          다음 공정으로 가기 전 수시로 물리적 크기를 **계측**하여 규격 밖의 결함을 차단함으로써 최종 수율을 보호합니다.
         """)
-        
+
     with tab2:
         st.markdown("""
         **2. PROBE & RELIABILITY TEST (전기적 및 가혹 조건 테스트)의 역할**
-        - **데이터 속 실제 공정 예시**: `DC Parametric Test` (직류 매개변수 테스트), `HAST` (고온고습시험), `Thermal Shock` (열충격 시험) 등
+        - **데이터 속 실제 공정 예시**: `DC Parametric Test`, `HAST` (고온고습시험), `Thermal Shock` (열충격 시험)
         - **수율에 미치는 영향**:
-          - **PROBE TEST**: 가공이 끝난 웨이퍼 상태에서 칩 하나하나를 전기 침으로 찔러보고 양품인지 불량인지 가려냅니다. 불량 칩을 후속 패키징 공정(조립 공정)에 보내는 낭비를 막아 비용 대비 완성품 수율을 높입니다.
-          - **RELIABILITY TEST**: 일상 환경보다 훨씬 가혹한 조건(고열, 충격, 높은 습도)을 가해 미래에 발생할 수 있는 잠재 불량을 찾아냅니다. 소비자가 칩을 사용하다 고장 나는 불량률을 방지하는 필수 절차입니다.
+          - **PROBE TEST**: 가공이 끝난 웨이퍼 상태에서 칩 하나하나를 전기 침으로 찔러 양품/불량을 가려냅니다.  
+            불량 칩을 후속 패키징 공정에 보내는 낭비를 막아 비용 대비 수율을 높입니다.
+          - **RELIABILITY TEST**: 고열, 충격, 높은 습도 등 가혹한 조건을 가해 잠재 불량을 사전에 찾아냅니다.
         """)
-        
+
     with tab3:
         st.markdown("""
         **3. SURFACE & FAILURE (표면 및 불량 분석)의 역할**
-        - **데이터 속 실제 공정 예시**: `X-ray 3D CT`, `Decapsulation` (칩 개봉), `TOF SIMS`, `XPS(Surface analysis)` 등
-        - **수율에 미치는 영향**:
-          아무리 검사를 잘해도 수율이 10%대로 곤두박질치는 돌발 사고가 발생합니다. 이때 **'반도체 의사'** 역할을 하는 것이 분석 공정입니다. 3D CT나 XPS 같은 나노 분석 장비로 불량이 난 미세 회로 속 이물질을 원소 기호 단위로 분석하여, 원인이 된 장비나 가스 배관을 고쳐 수율을 정상 궤도로 되돌려 줍니다.
+        - **데이터 속 실제 공정 예시**: `X-ray 3D CT`, `Decapsulation` (칩 개봉), `TOF SIMS`, `XPS(Surface analysis)`
+        - **수율에 미치는 영향**:  
+          아무리 검사를 잘해도 수율이 갑자기 떨어지는 돌발 사고가 발생합니다.  
+          이때 **'반도체 의사'** 역할을 하는 것이 분석 공정입니다.  
+          3D CT나 XPS 같은 나노 분석 장비로 불량 원인을 원소 기호 단위로 분석하여 장비를 수정하고 수율을 복구합니다.
         """)
 
     st.markdown("---")
-    st.markdown("### 🏫 탐구 보고서 작성을 위한 스스로 생각하기 질문")
+    st.markdown("### 🏫 스스로 생각하기 질문")
     st.info("""
-    🤔 **당곡고 토론 질문**:
-    제공된 데이터 속 `F4B001 GaAs Dry Etch` (가륨비소 건식 식각) 공정을 마친 직후, 깊이가 올바르게 깎였는지 신속히 검증하려면 어떤 공정을 연이어 수행하는 것이 수율 모니터링에 가장 효과적일까요? 
+    🤔 **당곡고 토론 질문**:  
+    `F4B001 GaAs Dry Etch` (건식 식각) 공정을 마친 직후, 깊이가 올바르게 깎였는지 신속히 검증하려면  
+    어떤 공정을 연이어 수행하는 것이 수율 모니터링에 가장 효과적일까요?  
     - 힌트: `INSPECTION` 카테고리 중 깊이(Depth)를 재는 공정을 데이터에서 검색해 찾아보세요!
     """)
 else:
