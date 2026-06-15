@@ -1,12 +1,12 @@
 import streamlit as st
 
-# 각 페이지를 st.Page로 정의
-main_page = st.Page(
-    "pages/home.py",
-    title="홈 - 공정 개요",
-    icon="🏠"
+st.set_page_config(
+    page_title="반도체 공정 탐구 앱",
+    page_icon="🔬",
+    layout="wide"
 )
 
+# pages 폴더 안의 두 파일을 명시적으로 등록
 page1 = st.Page(
     "pages/1_Process_Explorer.py",
     title="공정 탐색기",
@@ -19,14 +19,6 @@ page2 = st.Page(
     icon="📈"
 )
 
-# 네비게이션 등록 (이 한 줄이 사이드바를 만들어줌)
-pg = st.navigation([main_page, page1, page2])
-
-# 전체 페이지 공통 설정
-st.set_page_config(
-    page_title="반도체 공정 탐구 앱",
-    page_icon="🔬",
-    layout="wide"
-)
-
+# 사이드바 네비게이션 생성
+pg = st.navigation([page1, page2])
 pg.run()
