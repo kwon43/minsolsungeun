@@ -7,29 +7,29 @@ st.set_page_config(
     layout="wide"
 )
 
-# 2. 파이썬 표준 임포트 방식으로 다른 파일들로부터 페이지 함수들을 가져옵니다.
-# 이 방식은 서버 내 파일 경로 에러를 완벽하게 방지합니다!
+# 2. 최상위 폴더에 있는 파이썬 파일들로부터 페이지 함수들을 가져옵니다.
 try:
-    from pages.explorer import show_explorer_page
-    from pages.yield_analysis import show_yield_page
+    from explorer import show_explorer_page
+    from yield_analysis import show_yield_page
 except ModuleNotFoundError as e:
-    st.error(f"❌ 폴더 구조나 파일 이름이 올바르지 않습니다. 에러: {e}")
-    st.info("💡 깃허브에 'pages' 폴더가 소문자로 존재하고, 그 안에 'explorer.py'와 'yield_analysis.py' 파일이 정확히 올라갔는지 조장님과 확인해주세요!")
+    st.error(f"❌ 파일을 찾을 수 없습니다. 에러: {e}")
+    st.info("💡 깃허브 최상위 폴더에 'explorer.py'와 'yield_analysis.py' 파일이 정상적으로 올라갔는지 확인해 주세요!")
     st.stop()
 
-# 3. 가져온 함수들을 각각의 서브 페이지로 등록합니다.
-page1 = st.Page(
+# 3. 가져온 함수들을 st.Page 형태로 사이드바 메뉴에 등록합니다.
+page_explorer = st.Page(
     show_explorer_page,
-    title="공정 탐색기",
-    icon="🔍"
+    title="반도체 세부 공정 탐색기",  # 1번째 페이지 제목 설정
+    icon="🔍",
+    default=True                   # 첫 화면(기본값)으로 지정
 )
 
-page2 = st.Page(
+page_yield = st.Page(
     show_yield_page,
-    title="중요 공정과 수율",
+    title="중요 공정과 수율",         # 2번째 페이지 제목 설정
     icon="📈"
 )
 
-# 4. 네비게이션 생성 (무조건 왼쪽 사이드바가 활성화됩니다!)
-pg = st.navigation([page1, page2])
+# 4. 네비게이션 적용 (이 코드가 왼쪽 사이드바를 무조건 생성해 줍니다!)
+pg = st.navigation([page_explorer, page_yield])
 pg.run()
