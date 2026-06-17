@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import os
 
+# 💡 중요: 클래식 멀티페이지 방식에서는 개별 서브 페이지에 st.set_page_config를 사용하지 않습니다.
+
 @st.cache_data
 def load_data():
     file_name = "한국나노기술원_공정 정보_20260226.csv"
@@ -20,30 +22,17 @@ def load_data():
 df = load_data()
 
 st.title("🔍 반도체 세부 공정 탐색기")
-st.write("한국나노기술원에서 실제로 수행하는 공정들을 그룹별로 조회하고 분석할 수 있습니다.")
+st.write("이 페이지에서는 한국나노기술원에서 실제로 수행하는 공정들을 그룹별로 조회하고 분석할 수 있습니다.")
 
 if df is not None:
-
     st.sidebar.header("🔧 공정 필터")
 
     all_groups = sorted(df['공정그룹'].dropna().unique())
-    selected_group = st.sidebar.selectbox(
-        "공정그룹 선택",
-        ["전체 보기"] + list(all_groups)
-    )
+    selected_group = st.sidebar.selectbox("공정그룹 선택", ["전체 보기"] + list(all_groups))
 
-    search_keyword = st.sidebar.text_input("공정명 검색", "")
-
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("""
-    **💡 탐색 TIP**
-    - 공정그룹을 먼저 선택하세요
-    - 영문 공정명으로 검색하면 더 정확합니다
-    - 예: `Etch`, `CVD`, `SiN` 등
-    """)
+    search_keyword = st.sidebar.text_input("공정명 검색 (영문/한글)", "")
 
     filtered_df = df.copy()
-
     if selected_group != "전체 보기":
         filtered_df = filtered_df[filtered_df['공정그룹'] == selected_group]
 
@@ -52,70 +41,14 @@ if df is not None:
             filtered_df['공정명'].str.contains(search_keyword, case=False, na=False)
         ]
 
-    st.markdown("---")
-
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("전체 공정 수", f"{len(df)}개")
-    with col2:
-        st.metric("현재 필터 결과", f"{len(filtered_df)}개")
-    with col3:
-        st.metric("전체 공정그룹 수", f"{df['공정그룹'].nunique()}개")
-
-    st.markdown("---")
-
     st.write(f"### 📋 조회 결과 (총 {len(filtered_df)}건)")
-
-    if len(filtered_df) == 0:
-        st.warning("검색 결과가 없습니다. 다른 키워드나 그룹을 선택해보세요.")
-    else:
-        st.dataframe(filtered_df, use_container_width=True)
+    st.dataframe(filtered_df, use_container_width=True)
 
     st.markdown("---")
-    st.markdown("### 📚 공정그룹별 공정 수 비교")
-
-    if selected_group == "전체 보기":
-        chart_data = df['공정그룹'].value_counts()
-    else:
-        chart_data = filtered_df['공정그룹'].value_counts()
-
-    st.bar_chart(chart_data)
-
-    st.markdown("---")
-    st.markdown("### 💡 스스로 생각해보기")
-
-    with st.expander("📌 탐구 질문 1 - 박막 증착 공정 비교"):
-        st.write("""
-        **CVD, SPUTTER, EVAPORATOR** 공정그룹의 공정명들을 각각 필터로 찾아보세요.
-        이 공정들은 모두 반도체 표면에 얇은 막을 입히는 **박막(Thin Film) 증착 공정**입니다.
-
-        - CVD(화학기상증착): 가스 반응으로 막을 쌓습니다
-        - SPUTTER(스퍼터링): 아르곤 이온으로 금속을 날려 붙입니다
-        - EVAPORATOR(증발): 금속을 가열해 증발시켜 붙입니다
-
-        세 공정그룹에서 각각 어떤 재료(SiN, Metal, ITO 등)들이 주로 사용되고 있나요?
-        """)
-
-    with st.expander("📌 탐구 질문 2 - 식각 공정 비교"):
-        st.write("""
-        **ICP, RIE, WET-BENCH, WET-STATION** 공정그룹을 찾아보세요.
-        식각(Etch) 공정은 크게 **건식(Dry)**과 **습식(Wet)**으로 나뉩니다.
-
-        - 건식 식각(ICP, RIE): 플라즈마 가스를 이용, 정밀한 패턴 가능
-        - 습식 식각(WET-BENCH): 화학 용액을 이용, 빠르지만 방향성 없음
-
-        데이터에서 GaN, SiN, Metal 재료별로 어떤 식각 방법이 사용되고 있나요?
-        """)
-
-    with st.expander("📌 탐구 질문 3 - 리소그래피 공정 흐름"):
-        st.write("""
-        반도체 패턴을 만드는 **포토리소그래피** 공정은 순서가 중요합니다.
-
-        **COAT/DEVELOP → EXPOSURE → COAT/DEVELOP** 순서로 공정그룹을 필터링해보세요.
-
-        - PR 코팅 → 노광 → 현상 순서로 이어지는 공정들을 찾아보고
-        - 각 단계에서 사용되는 장비 코드(L1A, L1B 등)가 어떻게 다른지 비교해보세요.
-        """)
-
+    st.markdown("### 💡 스스로 생각해보기 (탐구 질문)")
+    st.write("1. **CVD, SPUTTER, EVAPORATOR** 공정그룹의 공정명들을 비교해 보세요. 이 공정들은 모두 반도체 표면에 얇은 막을 입히는 '박막(Thin Film) 증착 공정'에 속합니다. 각각 어떤 기술적 차이점이 있을까요?")
+    st.write("2. **ETCH, ICP, RIE** 공정그룹을 찾아보세요. 식각(Etch) 공정에서 건식 식각(Dry Etch)과 습식 식각(Wet Etch)의 특징은 데이터 속 공정명에서 어떻게 다르게 표현되고 있나요?")
+else:
+    st.error("데이터를 찾을 수 없습니다.")
 else:
     st.error("❌ 데이터를 불러오지 못했습니다. CSV 파일이 루트 폴더에 있는지 확인해주세요.")
