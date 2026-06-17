@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import os
 
+# 💡 중요: 클래식 멀티페이지 방식에서는 개별 서브 페이지에 st.set_page_config를 사용하지 않습니다.
+
 @st.cache_data
 def load_data():
     file_name = "한국나노기술원_공정 정보_20260226.csv"
@@ -23,49 +25,13 @@ st.title("📈 중요한 반도체 공정과 수율(Yield)")
 
 st.warning("""
 🚨 **데이터 특징 안내**  
-이 데이터는 공정 종류를 정의한 마스터 코드 목록입니다.  
-수율 수치(%)나 불량률 같은 정량 데이터는 포함되어 있지 않습니다.  
-대신, 수율을 높이고 품질을 관리하기 위한 **검사/계측/테스트/분석 공정**들이  
-실제로 등록되어 있어 이를 분석하고 학습합니다.
+제공해주신 '한국나노기술원 공정 정보' 데이터는 공정 종류를 정의한 마스터 코드 데이터입니다.  
+수율 수치(%)나 불량률 등의 구체적인 정량 데이터는 보안상 포함되어 있지 않습니다.  
+하지만 수율을 관리하기 위한 **'검사(INSPECTION)'**, **'테스트(PROBE TEST/RELIABILITY TEST)'**,  
+**'고장 분석(FAILURE)'**, **'계측(MEASUREMENT)'** 공정이 매우 정밀하게 등록되어 있어 이를 깊이 알아봅니다.
 """)
 
 if df is not None:
-
-    st.markdown("---")
-    st.markdown("## 1️⃣ 수율(Yield)이란 무엇인가?")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.info("""
-        **수율(Yield)의 정의**
-
-        웨이퍼 1장에서 만들어지는 전체 칩 중  
-        **정상적으로 작동하는 칩의 비율**을 뜻합니다.
-
-        > 수율(%) = (양품 칩 수 ÷ 전체 칩 수) × 100
-
-        예를 들어 웨이퍼 1장에서 칩 1000개를 만들었는데  
-        950개가 정상이라면 수율은 **95%** 입니다.
-        """)
-
-    with col2:
-        st.info("""
-        **수율이 왜 중요한가?**
-
-        반도체 1장의 웨이퍼 가격은 수십만원 ~ 수백만원입니다.
-        수율이 1%만 떨어져도 엄청난 손실이 발생합니다.
-
-        - 수율 95% → 칩 950개 생산
-        - 수율 90% → 칩 900개 생산
-        - **단 5% 차이가 수십억 원의 차이**를 만듭니다
-
-        그래서 공정 중간마다 **검사와 계측**이 필수입니다.
-        """)
-
-    st.markdown("---")
-    st.markdown("## 2️⃣ 우리 데이터 속 수율 관리 공정 분석")
-
     yield_related_groups = [
         'INSPECTION',
         'PROBE TEST',
@@ -75,30 +41,22 @@ if df is not None:
         'SURFACE'
     ]
 
+    st.markdown("### 🛠️ 우리 데이터 속 '수율 관리 및 검사' 관련 공정 현황")
+
     yield_df = df[df['공정그룹'].isin(yield_related_groups)]
-
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("수율 관리 관련 공정 수", f"{len(yield_df)}개")
-    with col2:
-        st.metric("전체 공정 대비 비율", f"{round(len(yield_df)/len(df)*100, 1)}%")
-    with col3:
-        st.metric("수율 관련 공정그룹 수", f"{len(yield_related_groups)}개")
-
-    st.markdown("---")
 
     col1, col2 = st.columns([1, 2])
 
     with col1:
-        st.write("#### 📊 수율 관련 공정그룹별 공정 수")
+        st.write("#### 📊 수율 관련 공정그룹 개수 비교")
         yield_counts = yield_df['공정그룹'].value_counts()
+        st.write(yield_counts)
         st.bar_chart(yield_counts)
-        st.dataframe(yield_counts, use_container_width=True)
 
     with col2:
         st.write("#### 🔍 세부 수율 관리 공정 목록")
         selected_yield_group = st.selectbox(
-            "탐구할 공정 영역을 선택하세요",
+            "탐구할 수율 관리 영역을 선택해 주세요",
             yield_related_groups
         )
         specific_yield_df = yield_df[yield_df['공정그룹'] == selected_yield_group]
@@ -108,207 +66,54 @@ if df is not None:
         )
 
     st.markdown("---")
-    st.markdown("## 3️⃣ 각 공정이 수율에 미치는 영향")
+    st.markdown("### 💡 공정이 수율에 주는 영향과 역할 탐구")
 
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "🧐 INSPECTION (검사/계측)",
-        "⚡ PROBE & RELIABILITY TEST",
-        "🔬 SURFACE & FAILURE (분석)",
-        "📐 MEASUREMENT (측정)"
+    tab1, tab2, tab3 = st.tabs([
+        "🧐 계측 및 검사 (INSPECTION)",
+        "⚡ 전기 및 신뢰성 테스트 (PROBE/RELIABILITY)",
+        "🔬 불량 추적 및 분석 (SURFACE/FAILURE)"
     ])
 
     with tab1:
-        st.markdown("### INSPECTION 공정의 역할")
-
-        inspection_df = df[df['공정그룹'] == 'INSPECTION']
-
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown("""
-            **핵심 역할:**
-            공정이 규격대로 진행됐는지 **물리적 수치로 확인**하는 단계입니다.
-            이 공정 없이는 불량의 원인을 파악할 수 없습니다.
-
-            **수율에 미치는 영향:**
-            - 선폭(CD)이 설계보다 두꺼우면 → 회로 단락 발생
-            - 박막 두께가 맞지 않으면 → 전기 저항 이상
-            - 패턴 정렬이 틀리면 → 칩 전체 불량
-
-            따라서 **각 공정 직후 계측**하여 이상을 조기 발견하면  
-            후속 공정 낭비 없이 수율을 보호할 수 있습니다.
-            """)
-
-        with col2:
-            st.write("**데이터 속 실제 INSPECTION 공정 목록**")
-            st.dataframe(
-                inspection_df[['공정코드', '공정명']],
-                use_container_width=True,
-                height=300
-            )
+        st.markdown("""
+        **1. INSPECTION (검사/계측 공정)의 역할**
+        - **데이터 속 실제 공정 예시**: `CD Measure` (선폭 측정), `Thickness Measure` (두께 측정), `Metal Thickness Inspection` (금속 두께 검사)
+        - **수율에 미치는 영향**:  
+          반도체의 회로 선폭(CD)이나 박막 두께는 나노미터(nm) 단위로 설계됩니다.  
+          이 두께나 선폭이 조금이라도 어긋나면 저항이 바뀌어 오작동하거나 회로가 끊어집니다.  
+          다음 공정으로 가기 전 수시로 물리적 크기를 **계측**하여 규격 밖의 결함을 차단함으로써 최종 수율을 보호합니다.
+        """)
 
     with tab2:
-        st.markdown("### PROBE TEST & RELIABILITY TEST 공정의 역할")
-
-        probe_df = df[df['공정그룹'] == 'PROBE TEST']
-        reliability_df = df[df['공정그룹'] == 'RELIABILITY TEST']
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.markdown("""
-            **PROBE TEST (프로브 테스트)**
-
-            웨이퍼 가공이 끝난 후 칩을 자르기 전,  
-            전기 탐침(Probe)으로 각 칩을 직접 테스트합니다.
-
-            **수율에 미치는 영향:**
-            - 불량 칩을 미리 걸러내어 패키징 비용 절감
-            - 어느 위치에서 불량이 많은지 웨이퍼 맵으로 확인
-            - 공정 이상 여부를 전기적으로 즉시 판단 가능
-            """)
-            st.write("**데이터 속 PROBE TEST 공정**")
-            st.dataframe(
-                probe_df[['공정코드', '공정명']],
-                use_container_width=True
-            )
-
-        with col2:
-            st.markdown("""
-            **RELIABILITY TEST (신뢰성 시험)**
-
-            실제 사용 환경보다 **훨씬 가혹한 조건**에서 테스트합니다.
-            잠재적 불량을 출하 전에 미리 찾아냅니다.
-
-            **수율에 미치는 영향:**
-            - HAST: 고온고습 → 배선 부식 불량 사전 발견
-            - Thermal Shock: 급격한 온도 변화 → 크랙 불량 발견
-            - 현장에서 고장 나는 불량률(Field Failure)을 방지
-            """)
-            st.write("**데이터 속 RELIABILITY TEST 공정**")
-            st.dataframe(
-                reliability_df[['공정코드', '공정명']],
-                use_container_width=True
-            )
+        st.markdown("""
+        **2. PROBE & RELIABILITY TEST (전기적 및 가혹 조건 테스트)의 역할**
+        - **데이터 속 실제 공정 예시**: `DC Parametric Test`, `HAST` (고온고습시험), `Thermal Shock` (열충격 시험)
+        - **수율에 미치는 영향**:
+          - **PROBE TEST**: 가공이 끝난 웨이퍼 상태에서 칩 하나하나를 전기 침으로 찔러 양품/불량을 가려냅니다.  
+            불량 칩을 후속 패키징 공정에 보내는 낭비를 막아 비용 대비 수율을 높입니다.
+          - **RELIABILITY TEST**: 고열, 충격, 높은 습도 등 가혹한 조건을 가해 잠재 불량을 사전에 찾아냅니다.
+        """)
 
     with tab3:
-        st.markdown("### SURFACE & FAILURE 분석 공정의 역할")
-
-        surface_df = df[df['공정그룹'] == 'SURFACE']
-        failure_df = df[df['공정그룹'] == 'FAILURE']
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.markdown("""
-            **SURFACE (표면 분석)**
-
-            나노미터 단위의 표면을 원소 수준에서 분석합니다.
-            오염 물질이나 막 성분을 정확히 파악합니다.
-
-            **수율에 미치는 영향:**
-            - XPS로 표면 원소 성분 분석 → 오염 원인 파악
-            - SIMS로 깊이별 불순물 분포 확인 → 도핑 이상 발견
-            - 공정 장비 이상을 화학적으로 추적
-            """)
-            st.write("**데이터 속 SURFACE 분석 공정**")
-            st.dataframe(
-                surface_df[['공정코드', '공정명']],
-                use_container_width=True
-            )
-
-        with col2:
-            st.markdown("""
-            **FAILURE (고장 분석)**
-
-            수율이 갑자기 떨어질 때 원인을 찾아내는  
-            **'반도체 의사'** 역할을 하는 공정입니다.
-
-            **수율에 미치는 영향:**
-            - X-ray 3D CT로 내부 구조를 비파괴 분석
-            - Decapsulation으로 칩 내부를 직접 확인
-            - 불량 원인 파악 후 공정 조건 수정 → 수율 복구
-            """)
-            st.write("**데이터 속 FAILURE 분석 공정**")
-            st.dataframe(
-                failure_df[['공정코드', '공정명']],
-                use_container_width=True
-            )
-
-    with tab4:
-        st.markdown("### MEASUREMENT&ANALYSIS 공정의 역할")
-
-        measure_df = df[df['공정그룹'] == 'MEASUREMENT&ANALYSIS']
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.markdown("""
-            **MEASUREMENT&ANALYSIS (측정 및 분석)**
-
-            전기적·물리적·화학적 특성을 종합적으로 측정합니다.
-
-            **수율에 미치는 영향:**
-            - Sheet Resistance(면저항) 측정 → 박막 품질 확인
-            - RF 특성 측정 → 고주파 소자 성능 검증
-            - 재료 특성 분석 → 에피택시 공정 품질 모니터링
-            """)
-
-        with col2:
-            st.write("**데이터 속 MEASUREMENT 공정**")
-            st.dataframe(
-                measure_df[['공정코드', '공정명']],
-                use_container_width=True,
-                height=300
-            )
-
-    st.markdown("---")
-    st.markdown("## 4️⃣ 수율 관리 공정 흐름 이해")
-
-    st.success("""
-    **반도체 공정에서 수율을 지키는 3단계 방어선**
-
-    🥇 **1차 방어 - 공정 중간 계측 (INSPECTION)**  
-    각 공정 직후 두께, 선폭, 패턴을 측정하여 이상을 즉시 발견
-
-    🥈 **2차 방어 - 완성 후 전기 테스트 (PROBE TEST)**  
-    웨이퍼 완성 후 전체 칩을 전기적으로 검사하여 불량 칩 선별
-
-    🥉 **3차 방어 - 출하 전 가혹 시험 (RELIABILITY TEST)**  
-    극한 환경에서 테스트하여 잠재 불량을 사전 제거
-    """)
+        st.markdown("""
+        **3. SURFACE & FAILURE (표면 및 불량 분석)의 역할**
+        - **데이터 속 실제 공정 예시**: `X-ray 3D CT`, `Decapsulation` (칩 개봉), `TOF SIMS`, `XPS(Surface analysis)`
+        - **수율에 미치는 영향**:  
+          아무리 검사를 잘해도 수율이 갑자기 떨어지는 돌발 사고가 발생합니다.  
+          이때 **'반도체 의사'** 역할을 하는 것이 분석 공정입니다.  
+          3D CT나 XPS 같은 나노 분석 장비로 불량 원인을 원소 기호 단위로 분석하여 장비를 수정하고 수율을 복구합니다.
+        """)
 
     st.markdown("---")
     st.markdown("### 🏫 스스로 생각하기 질문")
-
-    with st.expander("🤔 탐구 질문 1 - 식각 후 검사"):
-        st.info("""
-        `R4B001 GaN/GaAs Dry Etch` (건식 식각) 공정을 마친 직후,  
-        식각 깊이가 올바른지 확인하려면 어떤 공정을 수행해야 할까요?
-
-        - 힌트: 공정 탐색기 페이지에서 **INSPECTION** 그룹 중  
-          깊이(Depth)를 측정하는 공정을 검색해보세요!
-        - 정답 예시: `92400 Etch Depth Inspection`
-        """)
-
-    with st.expander("🤔 탐구 질문 2 - 금속 증착 후 검사"):
-        st.info("""
-        `F2B001 Metal Evaporation` (금속 증착) 공정 이후  
-        금속막의 두께가 규격에 맞는지 확인하는 공정은 무엇인가요?
-
-        - 힌트: **INSPECTION** 그룹에서 `Thickness`가 포함된  
-          공정을 공정 탐색기에서 찾아보세요!
-        - 정답 예시: `92100 Metal Thickness Inspection`
-        """)
-
-    with st.expander("🤔 탐구 질문 3 - 수율 저하 원인 분석"):
-        st.info("""
-        갑자기 수율이 60%에서 40%로 떨어졌습니다.  
-        원인을 찾기 위해 SURFACE 또는 FAILURE 그룹에서  
-        어떤 분석 공정을 활용하면 좋을까요?
-
-        - 힌트: 비파괴적으로 내부를 볼 수 있는 공정은 무엇인가요?
-        - 데이터에서 `O4A` 코드 공정들을 확인해보세요!
-        """)
+    st.info("""
+    🤔 **당곡고 토론 질문**:  
+    `F4B001 GaAs Dry Etch` (건식 식각) 공정을 마친 직후, 깊이가 올바르게 깎였는지 신속히 검증하려면  
+    어떤 공정을 연이어 수행하는 것이 수율 모니터링에 가장 효과적일까요?  
+    - 힌트: `INSPECTION` 카테고리 중 깊이(Depth)를 재는 공정을 데이터에서 검색해 찾아보세요!
+    """)
+else:
+    st.error("데이터를 불러오지 못했습니다.")
 
 else:
     st.error("❌ 데이터를 불러오지 못했습니다. CSV 파일이 루트 폴더에 있는지 확인해주세요.")
